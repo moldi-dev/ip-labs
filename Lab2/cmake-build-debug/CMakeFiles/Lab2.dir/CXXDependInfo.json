@@ -1,0 +1,21 @@
+{
+	"bmi-installation" : null,
+	"compiler-frontend-variant" : "GNU",
+	"compiler-id" : "GNU",
+	"compiler-simulate-id" : "",
+	"config" : "Debug",
+	"cxx-modules" : {},
+	"dir-cur-bld" : "/home/moldi/Desktop/Facultate/IP/Lab2/cmake-build-debug",
+	"dir-cur-src" : "/home/moldi/Desktop/Facultate/IP/Lab2",
+	"dir-top-bld" : "/home/moldi/Desktop/Facultate/IP/Lab2/cmake-build-debug",
+	"dir-top-src" : "/home/moldi/Desktop/Facultate/IP/Lab2",
+	"exports" : [],
+	"forward-modules-from-target-dirs" : [],
+	"include-dirs" : 
+	[
+		"/usr/include/opencv4"
+	],
+	"language" : "CXX",
+	"linked-target-dirs" : [],
+	"module-dir" : "/home/moldi/Desktop/Facultate/IP/Lab2/cmake-build-debug/CMakeFiles/Lab2.dir"
+}
