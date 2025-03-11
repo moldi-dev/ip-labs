@@ -1,0 +1,13 @@
+# ninja log v6
+1	312	1741602478895373330	CMakeFiles/Project.dir/main.cpp.o.ddi	733d319cbf10b079
+313	316	1741602479210979932	CMakeFiles/Project.dir/CXX.dd	f1588175a92f624b
+313	316	1741602479210979932	/home/moldi/Desktop/Facultate/IP/Project/cmake-build-debug/CMakeFiles/Project.dir/CXXModules.json	f1588175a92f624b
+313	316	1741602479210979932	CMakeFiles/Project.dir/main.cpp.o.modmap	f1588175a92f624b
+316	3298	1741602479210979932	CMakeFiles/Project.dir/main.cpp.o	52e4dbdc940d315b
+3299	3717	1741602482193969566	Project	a3cdab46cd3ddeee
+2	285	1741602539082005835	CMakeFiles/Project.dir/main.cpp.o.ddi	733d319cbf10b079
+285	288	1741602539364999405	CMakeFiles/Project.dir/CXX.dd	f1588175a92f624b
+285	288	1741602539364999405	/home/moldi/Desktop/Facultate/IP/Project/cmake-build-debug/CMakeFiles/Project.dir/CXXModules.json	f1588175a92f624b
+285	288	1741602539364999405	CMakeFiles/Project.dir/main.cpp.o.modmap	f1588175a92f624b
+288	2786	1741602539368161506	CMakeFiles/Project.dir/main.cpp.o	52e4dbdc940d315b
+2786	3195	1741602541865942581	Project	a3cdab46cd3ddeee

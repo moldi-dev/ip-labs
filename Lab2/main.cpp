@@ -2,38 +2,39 @@
 #include <iostream>
 #include <fstream>
 #include <random>
-using namespace cv;
 
-std::array<Mat_<uchar>, 3> get_rgb_channels(Mat_<Vec3b>& img);
+using namespace cv;
+using namespace std;
+
+array<Mat_<uchar>, 3> get_rgb_channels(Mat_<Vec3b>& img);
 Mat_<uchar> rgb_to_gray(Mat_<Vec3b>& img);
 Mat_<uchar> gray_to_binary(Mat_<uchar>& img, int threshold);
-std::array<Mat_<uchar>, 3> compute_h_s_v(Mat_<Vec3b>& img);
+array<Mat_<uchar>, 3> compute_h_s_v(Mat_<Vec3b>& img);
 bool is_inside(const Mat_<Vec3b>& img, int i, int j);
-Mat_<Vec3b> h_s_v_to_r_g_b(const std::array<Mat_<uchar>, 3>& h_s_v);
+Mat_<Vec3b> h_s_v_to_r_g_b(const array<Mat_<uchar>, 3>& h_s_v);
 
-void practical_work_1_test();
-void practical_work_2_test();
-void practical_work_3_test();
-void practical_work_4_test();
-void practical_work_5_test();
-void practical_work_6_test();
+void practical_work_1();
+void practical_work_2();
+void practical_work_3();
+void practical_work_4();
+void practical_work_5();
+void practical_work_6();
 
 int main() {
-    //practical_work_1_test();
-    //practical_work_2_test();
-    //practical_work_3_test();
-    practical_work_4_test();
-    //practical_work_5_test();
-    practical_work_6_test();
 
-    waitKey(0);
+    //practical_work_1();
+    //practical_work_2();
+    //practical_work_3();
+    //practical_work_4();
+    //practical_work_5();
+    //practical_work_6();
 
     return 0;
 }
 
 // Practical work 1: Create a function that will copy the R, G and B channels of a color, RGB24 image (CV_8UC3 type)
 // into three matrices of type CV_8UC1 (grayscale images). Display these matrices in three distinct windows.
-std::array<Mat_<uchar>, 3> get_rgb_channels(Mat_<Vec3b>& img) {
+array<Mat_<uchar>, 3> get_rgb_channels(Mat_<Vec3b>& img) {
     Mat_<uchar> red(img.rows, img.cols);
     Mat_<uchar> green(img.rows, img.cols);
     Mat_<uchar> blue(img.rows, img.cols);
@@ -46,7 +47,7 @@ std::array<Mat_<uchar>, 3> get_rgb_channels(Mat_<Vec3b>& img) {
         }
     }
 
-    return std::array<Mat_<uchar>, 3>({red, green, blue});
+    return array<Mat_<uchar>, 3>({red, green, blue});
 }
 
 // Practical work 2: Create a function that will convert a color RGB24 image (CV_8UC3 type) to a grayscale image (CV_8UC1),
@@ -87,7 +88,7 @@ Mat_<uchar> gray_to_binary(Mat_<uchar>& img, int threshold) {
 // Practical work 4: Create a function that will compute the H, S and V values from the R, G, B channels of an image,
 // using the equations from 2.6. Store each value(H, S, V) in a CV_8UC1 matrix. Display these matrices in distinct windows.
 // Check the correctness of your implementation using the example below.
-std::array<Mat_<uchar>, 3> compute_h_s_v(Mat_<Vec3b>& img) {
+array<Mat_<uchar>, 3> compute_h_s_v(Mat_<Vec3b>& img) {
     Mat_<uchar> hue(img.rows, img.cols);
     Mat_<uchar> saturation(img.rows, img.cols);
     Mat_<uchar> value(img.rows, img.cols);
@@ -98,8 +99,8 @@ std::array<Mat_<uchar>, 3> compute_h_s_v(Mat_<Vec3b>& img) {
             float g = (float)img(i, j)[1] / 255;
             float b = (float)img(i, j)[0] / 255;
 
-            float M = std::max(std::max(r, g), b);
-            float m = std::min(std::min(r, g), b);
+            float M = max(max(r, g), b);
+            float m = min(min(r, g), b);
 
             float C = M - m;
 
@@ -138,13 +139,13 @@ std::array<Mat_<uchar>, 3> compute_h_s_v(Mat_<Vec3b>& img) {
             s = s * 255;
             h = h * 255 / 360;
 
-            value(i, j) = std::clamp((int)v, 0, 255);
-            hue(i, j) = std::clamp((int)h, 0, 255);
-            saturation(i, j) = std::clamp((int)s, 0, 255);
+            value(i, j) = clamp((int)v, 0, 255);
+            hue(i, j) = clamp((int)h, 0, 255);
+            saturation(i, j) = clamp((int)s, 0, 255);
         }
     }
 
-    return std::array<Mat_<uchar>, 3>({hue, saturation, value});
+    return array<Mat_<uchar>, 3>({hue, saturation, value});
 }
 
 // Practical work 5: Implement a function called isInside(img, i, j) which checks if the position
@@ -154,9 +155,9 @@ bool is_inside(const Mat_<Vec3b>& img, const int i, const int j) {
 }
 
 // Bonus practical work: convert HSV to RGB
-Mat_<Vec3b> h_s_v_to_r_g_b(const std::array<Mat_<uchar>, 3>& h_s_v) {
+Mat_<Vec3b> h_s_v_to_r_g_b(const array<Mat_<uchar>, 3>& h_s_v) {
     Mat hsv_image;
-    merge(std::vector<Mat>{h_s_v[0]*180/255, h_s_v[1], h_s_v[2]}, hsv_image);
+    merge(vector<Mat>{h_s_v[0]*180/255, h_s_v[1], h_s_v[2]}, hsv_image);
 
     Mat rgb_image;
     cvtColor(hsv_image, rgb_image, COLOR_HSV2BGR);
@@ -164,57 +165,69 @@ Mat_<Vec3b> h_s_v_to_r_g_b(const std::array<Mat_<uchar>, 3>& h_s_v) {
     return rgb_image;
 }
 
-void practical_work_1_test() {
+void practical_work_1() {
     Mat_<Vec3b> img = imread("Images/Lena_24bits.bmp");
 
-    const std::array<Mat_<uchar>, 3> channels = get_rgb_channels(img);
+    const array<Mat_<uchar>, 3> channels = get_rgb_channels(img);
 
     imshow("Red channel result", channels[0]);
     imshow("Green channel result", channels[1]);
     imshow("Blue channel result", channels[2]);
+
+    waitKey(0);
 }
 
-void practical_work_2_test() {
+void practical_work_2() {
     Mat_<Vec3b> img = imread("Images/Lena_24bits.bmp");
     imshow("RGB to Grayscale result", rgb_to_gray(img));
+
+    waitKey(0);
 }
 
-void practical_work_3_test() {
+void practical_work_3() {
     int threshold;
 
     Mat_<uchar> img2 = imread("Images/Lena_24bits.bmp", IMREAD_GRAYSCALE);
 
-    std::cout << "Input the threshold (from 0 to 255): ";
-    std::cin >> threshold;
+    cout << "Input the threshold (from 0 to 255): ";
+    cin >> threshold;
 
     imshow("Gray to Binary result", gray_to_binary(img2, threshold));
+
+    waitKey(0);
 }
 
-void practical_work_4_test() {
+void practical_work_4() {
     Mat_<Vec3b> img = imread("Images/Lena_24bits.bmp");
-    const std::array<Mat_<uchar>, 3> hsv = compute_h_s_v(img);
+    const array<Mat_<uchar>, 3> hsv = compute_h_s_v(img);
     imshow("Hue image", hsv[0]);
     imshow("Saturation image", hsv[1]);
     imshow("Value image", hsv[2]);
+
+    waitKey(0);
 }
 
-void practical_work_5_test() {
+void practical_work_5() {
     Mat_<Vec3b> img = imread("Images/Lena_24bits.bmp");
 
-    std::cout << is_inside(img, 1, 10) << std::endl;
-    std::cout << is_inside(img, 1, 100) << std::endl;
-    std::cout << is_inside(img, 1, 1000) << std::endl;
-    std::cout << is_inside(img, 1, 10000) << std::endl;
-    std::cout << is_inside(img, 10, 1) << std::endl;
-    std::cout << is_inside(img, 100, 1) << std::endl;
-    std::cout << is_inside(img, 1000, 1) << std::endl;
-    std::cout << is_inside(img, 10000, 1) << std::endl;
+    cout << is_inside(img, 1, 10) << endl;
+    cout << is_inside(img, 1, 100) << endl;
+    cout << is_inside(img, 1, 1000) << endl;
+    cout << is_inside(img, 1, 10000) << endl;
+    cout << is_inside(img, 10, 1) << endl;
+    cout << is_inside(img, 100, 1) << endl;
+    cout << is_inside(img, 1000, 1) << endl;
+    cout << is_inside(img, 10000, 1) << endl;
+
+    waitKey(0);
 }
 
-void practical_work_6_test() {
+void practical_work_6() {
     Mat_<Vec3b> img = imread("Images/Lena_24bits.bmp");
-    std::array<Mat_<uchar>, 3> hsv = compute_h_s_v(img);
+    array<Mat_<uchar>, 3> hsv = compute_h_s_v(img);
     imshow("HSV to RGB result", h_s_v_to_r_g_b(hsv));
+
+    waitKey(0);
 }
 
 

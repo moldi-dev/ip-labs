@@ -1,0 +1,3 @@
+/home/moldi/Desktop/Facultate/IP/Lab4/cmake-build-debug/CMakeFiles/Lab4.dir
+/home/moldi/Desktop/Facultate/IP/Lab4/cmake-build-debug/CMakeFiles/edit_cache.dir
+/home/moldi/Desktop/Facultate/IP/Lab4/cmake-build-debug/CMakeFiles/rebuild_cache.dir

@@ -3,11 +3,13 @@
 #include <fstream>
 #include <random>
 #include <float.h>
-using namespace cv;
 
-// Given function in the laboratory guide
-void show_histogram(const std::string& name, const int* hist, int hist_cols, int hist_height);
-void show_histogram_float_type(const std::string& name, const float* hist, int hist_cols, int hist_height);
+using namespace cv;
+using namespace std;
+
+// Given functions in the laboratory guide
+void show_histogram(const string& name, const int* hist, int hist_cols, int hist_height);
+void show_histogram_float_type(const string& name, const float* hist, int hist_cols, int hist_height);
 
 // Practical work 1: compute the histogram for a given grayscale image (in an array of integers having dimension 256).
 void compute_histogram(const Mat_<uchar>& image, int* hist);
@@ -25,20 +27,20 @@ void compute_histogram(const Mat_<uchar>& image, int* hist, int bins);
 void practical_work_4();
 
 // Practical work 5: Implement the multilevel thresholding algorithm from section 3.3.
-std::vector<int> find_local_maxima(const float* pdf, int window_size, float threshold);
-Mat_<uchar> apply_thresholding(const Mat& image, const std::vector<int>& maxima);
+vector<int> find_local_maxima(const float* pdf, int window_size, float threshold);
+Mat_<uchar> apply_thresholding(const Mat& image, const vector<int>& maxima);
 void practical_work_5();
 
 // Practical work 6: Enhance the multilevel thresholding algorithm using the Floyd-Steinberg dithering from section 3.4.
 bool is_inside(const Mat& img, int i, int j);
-Mat_<uchar> apply_thresholding_floyd_steinberg_dithering(const Mat_<uchar>& image, const std::vector<int>& maxima);
+Mat_<uchar> apply_thresholding_floyd_steinberg_dithering(const Mat_<uchar>& image, const vector<int>& maxima);
 void practical_work_6();
 
-// 7. Perform multilevel thresholding on a color image by applying the procedure from 3.3 on the Hue channel from the HSV
+// Practical work 7: Perform multilevel thresholding on a color image by applying the procedure from 3.3 on the Hue channel from the HSV
 // color - space representation of the image. Modify only the Hue values, keeping the S and V channels unchanged or setting them to their
 // maximum possible value. Transform the result back to RGB color - space for viewing.
-std::array<Mat_<uchar>, 3> compute_h_s_v(Mat_<Vec3b>& img);
-Mat_<Vec3b> h_s_v_to_r_g_b(const std::array<Mat_<uchar>, 3>& h_s_v);
+array<Mat_<uchar>, 3> compute_h_s_v(Mat_<Vec3b>& img);
+Mat_<Vec3b> h_s_v_to_r_g_b(const array<Mat_<uchar>, 3>& h_s_v);
 void practical_work_7();
 
 int main() {
@@ -54,7 +56,7 @@ int main() {
     return 0;
 }
 
-void show_histogram(const std::string& name, const int* hist, const int hist_cols, const int hist_height) {
+void show_histogram(const string& name, const int* hist, const int hist_cols, const int hist_height) {
     int max_hist = 0;
     double scale = 1.0;
     int baseline = hist_height - 1;
@@ -77,7 +79,7 @@ void show_histogram(const std::string& name, const int* hist, const int hist_col
     imshow(name, imgHist);
 }
 
-void show_histogram_float_type(const std::string& name, const float* hist, const int hist_cols, const int hist_height) {
+void show_histogram_float_type(const string& name, const float* hist, const int hist_cols, const int hist_height) {
     float max_data = 0;
     double scale = 1.0;
     int baseline = hist_height - 1;
@@ -130,14 +132,14 @@ void compute_histogram(const Mat_<uchar>& image, int* hist, int bins) {
         for (int j = 0; j < image.cols; j++) {
             int intensity = image(i, j);
             int bin_index = (int)(intensity / bin_width);
-            bin_index = std::min(bin_index, bins - 1);
+            bin_index = min(bin_index, bins - 1);
             hist[bin_index]++;
         }
     }
 }
 
-std::vector<int> find_local_maxima(const float* pdf, int window_size, float threshold) {
-    std::vector<int> maxima;
+vector<int> find_local_maxima(const float* pdf, int window_size, float threshold) {
+    vector<int> maxima;
     int half_window = window_size / 2;
 
     for (int k = half_window; k < 256 - half_window; k++) {
@@ -175,7 +177,7 @@ bool is_inside(const Mat& img, const int i, const int j) {
     return i >= 0 && i < img.rows && j >= 0 && j < img.cols;
 }
 
-Mat_<uchar> apply_thresholding(const Mat_<uchar>& image, const std::vector<int>& maxima) {
+Mat_<uchar> apply_thresholding(const Mat_<uchar>& image, const vector<int>& maxima) {
     Mat_<uchar> result = image.clone();
 
     for (int i = 0; i < image.rows; i++) {
@@ -204,12 +206,13 @@ Mat_<uchar> apply_thresholding(const Mat_<uchar>& image, const std::vector<int>&
     return result;
 }
 
-Mat_<uchar> apply_thresholding_floyd_steinberg_dithering(const Mat_<uchar>& image, const std::vector<int>& maxima) {
-    Mat_<uchar> result = image.clone();
+Mat_<uchar> apply_thresholding_floyd_steinberg_dithering(const Mat_<uchar>& image, const vector<int>& maxima) {
+    Mat_<uchar> clone = image.clone();
+    Mat_<uchar> result(image.rows, image.cols);
 
     for (int i = 0; i < image.rows; i++) {
         for (int j = 0; j < image.cols; j++) {
-            int intensity = result(i, j);
+            int intensity = clone(i, j);
             int new_intensity = 0;
 
             for (size_t k = 0; k < maxima.size() - 1; k++) {
@@ -231,19 +234,19 @@ Mat_<uchar> apply_thresholding_floyd_steinberg_dithering(const Mat_<uchar>& imag
             int error = intensity - new_intensity;
 
             if (is_inside(image, i, j + 1)) {
-                result(i, j + 1) = image(i, j + 1) + 7 * error / 16;
+                clone(i, j + 1) = clamp(clone(i, j + 1) + 7 * error / 16, 0, 255);
             }
 
             if (is_inside(image, i + 1, j - 1)) {
-                result(i + 1, j - 1) = image(i + 1, j - 1) + 3 * error / 16;
+                clone(i + 1, j - 1) = clamp(clone(i + 1, j - 1) + 3 * error / 16, 0, 255);
             }
 
             if (is_inside(image, i + 1, j)) {
-                result(i + 1, j) = image(i + 1, j) + 5 * error / 16;
+                clone(i + 1, j) = clamp(clone(i + 1, j) + 5 * error / 16, 0, 255);
             }
 
             if (is_inside(image, i + 1, j + 1)) {
-                result(i + 1, j + 1) = image(i + 1, j + 1) + error / 16;
+                clone(i + 1, j + 1) = clamp(clone(i + 1, j + 1) + error / 16, 0, 255);
             }
         }
     }
@@ -251,7 +254,7 @@ Mat_<uchar> apply_thresholding_floyd_steinberg_dithering(const Mat_<uchar>& imag
     return result;
 }
 
-std::array<Mat_<uchar>, 3> compute_h_s_v(Mat_<Vec3b>& img) {
+array<Mat_<uchar>, 3> compute_h_s_v(Mat_<Vec3b>& img) {
     Mat_<uchar> hue(img.rows, img.cols);
     Mat_<uchar> saturation(img.rows, img.cols);
     Mat_<uchar> value(img.rows, img.cols);
@@ -262,8 +265,8 @@ std::array<Mat_<uchar>, 3> compute_h_s_v(Mat_<Vec3b>& img) {
             float g = (float)img(i, j)[1] / 255;
             float b = (float)img(i, j)[0] / 255;
 
-            float M = std::max(std::max(r, g), b);
-            float m = std::min(std::min(r, g), b);
+            float M = max(max(r, g), b);
+            float m = min(min(r, g), b);
 
             float C = M - m;
 
@@ -300,20 +303,20 @@ std::array<Mat_<uchar>, 3> compute_h_s_v(Mat_<Vec3b>& img) {
 
             v = v * 255;
             s = s * 255;
-            h = h * 255 / 360;
+            h = h * 180 / 360;
 
-            value(i, j) = std::clamp((int)v, 0, 255);
-            hue(i, j) = std::clamp((int)h, 0, 255);
-            saturation(i, j) = std::clamp((int)s, 0, 255);
+            value(i, j) = clamp((int)v, 0, 255);
+            hue(i, j) = clamp((int)h, 0, 255);
+            saturation(i, j) = clamp((int)s, 0, 255);
         }
     }
 
-    return std::array<Mat_<uchar>, 3>({hue, saturation, value});
+    return array<Mat_<uchar>, 3>({hue, saturation, value});
 }
 
-Mat_<Vec3b> h_s_v_to_r_g_b(const std::array<Mat_<uchar>, 3>& h_s_v) {
+Mat_<Vec3b> h_s_v_to_r_g_b(const array<Mat_<uchar>, 3>& h_s_v) {
     Mat hsv_image;
-    merge(std::vector<Mat>{h_s_v[0]*180/255, h_s_v[1], h_s_v[2]}, hsv_image);
+    merge(vector<Mat>{h_s_v[0]*180/255, h_s_v[1], h_s_v[2]}, hsv_image);
 
     Mat rgb_image;
     cvtColor(hsv_image, rgb_image, COLOR_HSV2BGR);
@@ -390,7 +393,7 @@ void practical_work_5() {
     // Step 3: Find local maxima in the PDF
     int window_size = 11; // Window size for local maxima detection (2 * WH + 1, WH = 5)
     float threshold = 0.0003f; // Threshold for local maxima
-    std::vector<int> maxima = find_local_maxima(pdf, window_size, threshold);
+    vector<int> maxima = find_local_maxima(pdf, window_size, threshold);
 
     // Step 4: Apply thresholding
     Mat_<uchar> thresholded_image = apply_thresholding(image, maxima);
@@ -417,7 +420,7 @@ void practical_work_6() {
     // Step 3: Find local maxima in the PDF
     int window_size = 11; // Window size for local maxima detection (2 * WH + 1, WH = 5)
     float threshold = 0.0003f; // Threshold for local maxima
-    std::vector<int> maxima = find_local_maxima(pdf, window_size, threshold);
+    vector<int> maxima = find_local_maxima(pdf, window_size, threshold);
 
     // Step 4: Apply thresholding
     Mat_<uchar> thresholded_image = apply_thresholding_floyd_steinberg_dithering(image, maxima);
@@ -432,7 +435,7 @@ void practical_work_6() {
 void practical_work_7() {
     Mat_<Vec3b> img = imread("Images/Lena_24bits.bmp");
 
-    std::array<Mat_<uchar>, 3> hsv_channels = compute_h_s_v(img);
+    array<Mat_<uchar>, 3> hsv_channels = compute_h_s_v(img);
 
     // Step 1: Compute the histogram of the Hue channel
     int histogram[256] = {0};
@@ -446,7 +449,7 @@ void practical_work_7() {
     // Step 3: Find local maxima in the PDF
     int window_size = 11; // Window size for local maxima detection (2 * WH + 1, WH = 5)
     float threshold = 0.0003f; // Threshold for local maxima
-    std::vector<int> maxima = find_local_maxima(pdf, window_size, threshold);
+    vector<int> maxima = find_local_maxima(pdf, window_size, threshold);
 
     // Step 4: Apply thresholding to the Hue channel and change the saturation and value to their maximum values
     Mat_<uchar> thresholded_hue = apply_thresholding(hsv_channels[0], maxima);
@@ -465,7 +468,3 @@ void practical_work_7() {
 
     waitKey(0);
 }
-
-
-
-
