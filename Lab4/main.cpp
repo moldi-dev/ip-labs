@@ -1,64 +1,79 @@
 #include <opencv2/opencv.hpp>
 #include <iostream>
 #include <fstream>
-#include <float.h>
 #include <random>
-#include <math.h>
+#include <unordered_set>
 
 using namespace cv;
 using namespace std;
 
 // Practical work 1: For a specific object in a labeled image selected by a mouse click, compute the object’s
 // area, center of mass, axis of elongation, perimeter, thinness ratio, aspect ratio and projections.
-vector<Point> find_object_pixels(Mat_<uchar>& image, int label);
-int compute_object_area(vector<Point>& object_pixels);
-Point2d compute_object_center_of_mass(vector<Point>& object_pixels);
-double compute_object_axis_of_elongation(vector<Point>& object_pixels, Point2d center_of_mass);
-int compute_object_perimeter(Mat_<uchar>& image, int label);
+vector<Point> find_object_pixels(Mat_<uchar> image, int x, int y);
+int compute_object_area(vector<Point> object_pixels);
+Point2d compute_object_center_of_mass(vector<Point> object_pixels);
+double compute_object_axis_of_elongation(vector<Point> object_pixels, Point2d center_of_mass);
+int compute_object_perimeter(Mat_<uchar> image, vector<Point> object_pixels);
 double compute_object_thinness(int object_area, int object_perimeter);
-double compute_object_aspect_ratio(vector<Point>& object_pixels);
-pair<vector<int>, vector<int>> compute_object_projections(vector<Point>& object_pixels, int rows, int columns);
+double compute_object_aspect_ratio(vector<Point> object_pixels);
+pair<vector<int>, vector<int>> compute_object_projections(Mat_<uchar> image, vector<Point> object_pixels);
 
-// Practical work 1.a: Display the results in the standard output
-void onMouse_1a(int event, int x, int y, int flags, void* param);
-void practical_work_1_a();
-
-// Practical work 1.b: In a separate image (source image clone)
-void onMouse_1b(int event, int x, int y, int flags, void* param);
-Mat_<Vec3b> draw_object_contour(Mat_<uchar>& image, int label);
-void practical_work_1_b();
-
-// Practical work 1.c: Compute and display the projections of the selected object in a separate image
+// a. Display the results in the standard output
+// b. In a separate image (source image clone):
+// Draw the contour points of the selected object
+// Display the center of mass of the selected object
+// Display the axis of elongation of the selected object by using the line
+// function from OpenCV.
+// c. Compute and display the projections of the selected object in a separate image
 // (source image clone).
-void onMouse_1c(int event, int x, int y, int flags, void* param);
-Mat_<Vec3b> draw_object_projections(pair<vector<int>, vector<int>>& projections);
-void practical_work_1_c();
+void onMouse(int event, int x, int y, int flags, void* param);
+Mat_<Vec3b> draw_object_contour(Mat_<uchar> image, vector<Point> object_pixels, Vec3b color);
+Mat_<Vec3b> draw_object_projections(pair<vector<int>, vector<int>> object_projections, pair<Vec3b, Vec3b> projections_colors);
+void practical_work_1();
 
 // Practical work 2: Create a new processing function which takes as input a labeled image and keeps in the
 // output image only the objects that:
 // a. have their area < TH_area
 // b. have a specific orientation phi, where phi_LOW < phi < phi_HIGH
-// where TH_area, phi_LOW, phi_HIGH are given by the user
-Mat_<uchar> processing_function(Mat_<uchar>& image, int TH_area, int phi_LOW, int phi_HIGH);
+// where TH_area, phi_LOW, phi_HIGH are given by the user.
+Mat_<uchar> processing_function(Mat_<uchar> image, int TH_area, int phi_LOW, int phi_HIGH);
+vector<Point> find_object_pixels(Mat_<uchar> image, int label);
 void practical_work_2();
 
 int main() {
 
-    //practical_work_1_a();
-    //practical_work_1_b();
-    //practical_work_1_c();
-    practical_work_2();
+    //practical_work_1();
+    //practical_work_2();
 
     return 0;
 }
 
-vector<Point> find_object_pixels(Mat_<uchar>& image, int label) {
+vector<Point> find_object_pixels(Mat_<uchar> image, int x, int y) {
     vector<Point> result;
+    int label = image(y, x);
+    vector<vector<bool>> visited(image.rows, vector<bool>(image.cols, false));
+    queue<Point> q;
+    q.push(Point(x, y));
+    visited[y][x] = true;
 
-    for (int i = 0; i < image.rows; i++) {
-        for (int j = 0; j < image.cols; j++) {
-            if (image(i, j) == label) {
-                result.push_back(Point(i, j));
+    while (!q.empty()) {
+        Point p = q.front();
+        q.pop();
+        result.push_back(p);
+
+        for (int i = -1; i <= 1; i++) {
+            for (int j = -1; j <= 1; j++) {
+                if (i == 0 && j == 0) {
+                    continue;
+                }
+
+                int nx = p.x + i;
+                int ny = p.y + j;
+
+                if (nx >= 0 && nx < image.cols && ny >= 0 && ny < image.rows && image(ny, nx) == label && !visited[ny][nx]) {
+                    q.push(Point(nx, ny));
+                    visited[ny][nx] = true;
+                }
             }
         }
     }
@@ -66,11 +81,11 @@ vector<Point> find_object_pixels(Mat_<uchar>& image, int label) {
     return result;
 }
 
-int compute_object_area(vector<Point>& object_pixels) {
+int compute_object_area(vector<Point> object_pixels) {
     return object_pixels.size();
 }
 
-Point2d compute_object_center_of_mass(vector<Point>& object_pixels) {
+Point2d compute_object_center_of_mass(vector<Point> object_pixels) {
     Point2d result(0, 0);
 
     for (int i = 0; i < object_pixels.size(); i++) {
@@ -84,7 +99,7 @@ Point2d compute_object_center_of_mass(vector<Point>& object_pixels) {
     return result;
 }
 
-double compute_object_axis_of_elongation(vector<Point>& object_pixels, Point2d center_of_mass) {
+double compute_object_axis_of_elongation(vector<Point> object_pixels, Point2d center_of_mass) {
     double sum_i2j2 = 0;
     double sum_i2 = 0;
     double sum_j2 = 0;
@@ -101,29 +116,24 @@ double compute_object_axis_of_elongation(vector<Point>& object_pixels, Point2d c
     return 0.5 * (atan2(2.0 * sum_i2j2, (sum_j2 - sum_i2)));
 }
 
-int compute_object_perimeter(Mat_<uchar>& image, int label) {
+int compute_object_perimeter(Mat_<uchar> image, vector<Point> object_pixels) {
     int result = 0;
 
-    for (int i = 0; i < image.rows; i++) {
-        for (int j = 0; j < image.cols; j++) {
-            if (image(i, j) == label) {
-                bool on_contour = false;
+    for (const Point& p : object_pixels) {
+        bool on_contour = false;
 
-                if (i == 0 || i == image.rows - 1 || j == 0 || j == image.cols - 1) {
-                    on_contour = true;
-                }
+        if (p.x == 0 || p.x == image.rows - 1 || p.y == 0 || p.y == image.cols - 1) {
+            on_contour = true;
+        }
 
-                else {
-                    if (image(i - 1, j) != label || image(i + 1, j) != label ||
-                        image(i, j - 1) != label || image(i, j + 1) != label) {
-                        on_contour = true;
-                        }
-                }
-
-                if (on_contour) {
-                    result++;
-                }
+        else {
+            if (image(p.x - 1, p.y) != image(p.x, p.y) || image(p.x + 1, p.y) != image(p.x, p.y) || image(p.x, p.y - 1) != image(p.x, p.y) || image(p.x, p.y + 1) != image(p.x, p.y)) {
+                on_contour = true;
             }
+        }
+
+        if (on_contour) {
+            result++;
         }
     }
 
@@ -138,7 +148,7 @@ double compute_object_thinness(int object_area, int object_perimeter) {
     return 4.0 * CV_PI * object_area / (object_perimeter * object_perimeter);
 }
 
-double compute_object_aspect_ratio(vector<Point>& object_pixels) {
+double compute_object_aspect_ratio(vector<Point> object_pixels) {
     int min_i = object_pixels[0].x;
     int max_i = object_pixels[0].x;
 
@@ -163,20 +173,19 @@ double compute_object_aspect_ratio(vector<Point>& object_pixels) {
     return -1.0;
 }
 
-pair<vector<int>, vector<int>> compute_object_projections(vector<Point>& object_pixels, int rows, int columns) {
-    vector<int> horizontal_object_projection(rows, 0);
-    vector<int> vertical_object_projection(columns, 0);
-    pair<vector<int>, vector<int>> result(horizontal_object_projection, vertical_object_projection);
+pair<vector<int>, vector<int>> compute_object_projections(Mat_<uchar> image, vector<Point> object_pixels) {
+    vector<int> horizontal_projection(image.rows, 0);
+    vector<int> vertical_projection(image.cols, 0);
 
-    for (int i = 0; i < object_pixels.size(); i++) {
-        horizontal_object_projection[object_pixels[i].x]++;
-        vertical_object_projection[object_pixels[i].y]++;
+    for (const Point& p : object_pixels) {
+        horizontal_projection[p.y]++;
+        vertical_projection[p.x]++;
     }
 
-    return result;
+    return make_pair(horizontal_projection, vertical_projection);
 }
 
-void onMouse_1a(int event, int x, int y, int flags, void* param) {
+void onMouse(int event, int x, int y, int flags, void* param) {
     if (event != EVENT_LBUTTONDOWN) {
         return;
     }
@@ -185,13 +194,37 @@ void onMouse_1a(int event, int x, int y, int flags, void* param) {
     Mat_<uchar> image = *image_ptr;
 
     int label = image(y, x);
-    vector<Point> object_pixels = find_object_pixels(image, label);
+    vector<Point> object_pixels = find_object_pixels(image, x, y);
+    Mat_<Vec3b> clone = draw_object_contour(image, object_pixels, Vec3b(0, 0, 255));
     int object_area = compute_object_area(object_pixels);
     Point2d object_center_of_mass = compute_object_center_of_mass(object_pixels);
-    int object_perimeter = compute_object_perimeter(image, label);
+    int object_perimeter = compute_object_perimeter(image, object_pixels);
     double object_thinness = compute_object_thinness(object_area, object_perimeter);
     double object_aspect_ratio = compute_object_aspect_ratio(object_pixels);
     double object_axis_of_elongation = compute_object_axis_of_elongation(object_pixels, object_center_of_mass);
+    pair<vector<int>, vector<int>> object_projections = compute_object_projections(image, object_pixels);
+    pair<Vec3b, Vec3b> projections_colors(Vec3b(0, 255, 0), Vec3b(255, 0, 0));
+    Mat_<Vec3b> clone_2 = draw_object_projections(object_projections, projections_colors);
+
+    Point center((int)round(object_center_of_mass.x), (int)round(object_center_of_mass.y));
+    circle(clone, center, 5, Scalar(0, 0, 255), -1);
+
+    double length = 25.0;
+
+    Point p1(
+        (int)round(object_center_of_mass.x - length * cos(object_axis_of_elongation)),
+        (int)round(object_center_of_mass.y - length * sin(object_axis_of_elongation))
+    );
+
+    Point p2(
+        (int)round(object_center_of_mass.x + length * cos(object_axis_of_elongation)),
+        (int)round(object_center_of_mass.y + length * sin(object_axis_of_elongation))
+    );
+
+    line(clone, p1, p2, Scalar(255, 0, 0), 2);
+
+    imshow("1 clone", clone);
+    imshow("1 projections", clone_2);
 
     cout << "Label: " << label << endl;
     cout << "Area: " << object_area << endl;
@@ -204,161 +237,81 @@ void onMouse_1a(int event, int x, int y, int flags, void* param) {
     cout << endl << endl;
 }
 
-void practical_work_1_a() {
-    Mat_<uchar> image = imread("Images/trasaturi_geom.bmp", IMREAD_GRAYSCALE);
-
-    namedWindow("1a", WINDOW_AUTOSIZE);
-    imshow("1a", image);
-
-    setMouseCallback("1a", onMouse_1a, &image);
-
-    waitKey(0);
-    destroyWindow("1a");
-}
-
-void onMouse_1b(int event, int x, int y, int flags, void* param) {
-    if (event != EVENT_LBUTTONDOWN) {
-        return;
-    }
-
-    Mat_<uchar>* image_ptr = (Mat_<uchar>*)param;
-    Mat_<uchar> image = *image_ptr;
-
-    int label = image(y, x);
-    Mat_<Vec3b> clone = draw_object_contour(image, label);
-    vector<Point> object_pixels = find_object_pixels(image, label);
-    Point2d object_center_of_mass = compute_object_center_of_mass(object_pixels);
-    double object_axis_of_elongation = compute_object_axis_of_elongation(object_pixels, object_center_of_mass);
-
-    Point center((int)round(object_center_of_mass.y), (int)round(object_center_of_mass.x));
-    circle(clone, center, 5, Scalar(0, 0, 255), -1);
-
-    double length = 25.0;
-
-    Point p1(
-        (int)round(object_center_of_mass.y - length * cos(object_axis_of_elongation)),
-        (int)round(object_center_of_mass.x - length * sin(object_axis_of_elongation))
-    );
-
-    Point p2(
-        (int)round(object_center_of_mass.y + length * cos(object_axis_of_elongation)),
-        (int)round(object_center_of_mass.x + length * sin(object_axis_of_elongation))
-    );
-
-    line(clone, p1, p2, Scalar(255, 0, 0), 2);
-
-    imshow("1b clone", clone);
-
-    waitKey(0);
-}
-
-Mat_<Vec3b> draw_object_contour(Mat_<uchar>& image, int label) {
+Mat_<Vec3b> draw_object_contour(Mat_<uchar> image, vector<Point> object_pixels, Vec3b color) {
     Mat_<Vec3b> result;
-
+    unordered_set<int> object_set;
     cvtColor(image, result, COLOR_GRAY2BGR);
 
-    for (int i = 0; i < image.rows; i++) {
-        for (int j = 0; j < image.cols; j++) {
-            if (image(i, j) == label) {
-                bool on_contour = false;
+    for (const Point& p : object_pixels) {
+        object_set.insert(p.y * image.cols + p.x);
+    }
 
-                if (i == 0 || i == image.rows - 1 || j == 0 || j == image.cols - 1) {
-                    on_contour = true;
-                }
+    for (const Point& p : object_pixels) {
+        bool on_contour = false;
 
-                else {
-                    if (image(i-1, j) != label || image(i+1, j) != label ||
-                        image(i, j-1) != label || image(i, j+1) != label) {
-                        on_contour = true;
-                        }
-                }
+        if (p.x == 0 || p.x == image.cols - 1 || p.y == 0 || p.y == image.rows - 1) {
+            on_contour = true;
+        }
 
-                if (on_contour) {
-                    result(i, j) = Vec3b(0, 255, 0);
+        else {
+            if (object_set.find((p.y - 1) * image.cols + p.x) == object_set.end() ||
+                object_set.find((p.y + 1) * image.cols + p.x) == object_set.end() ||
+                object_set.find(p.y * image.cols + (p.x - 1)) == object_set.end() ||
+                object_set.find(p.y * image.cols + (p.x + 1)) == object_set.end()) {
+                on_contour = true;
                 }
-            }
+        }
+
+        if (on_contour) {
+            result(p.y, p.x) = color;
         }
     }
 
     return result;
 }
 
-void practical_work_1_b() {
-    Mat_<uchar> image = imread("Images/trasaturi_geom.bmp", IMREAD_GRAYSCALE);
+Mat_<Vec3b> draw_object_projections(pair<vector<int>, vector<int>> object_projections, pair<Vec3b, Vec3b> projections_colors) {
+    Mat_<Vec3b> result(500, 500, Vec3b(255, 255, 255));
 
-    namedWindow("1b", WINDOW_AUTOSIZE);
-    imshow("1b", image);
+    vector<int> horizontal_projection = object_projections.first;
+    vector<int> vertical_projection = object_projections.second;
 
-    setMouseCallback("1b", onMouse_1b, &image);
+    int max_horizontal = *max_element(horizontal_projection.begin(), horizontal_projection.end());
+    int max_vertical = *max_element(vertical_projection.begin(), vertical_projection.end());
 
-    waitKey(0);
-    destroyWindow("1b");
-}
+    for (int x = 0; x < horizontal_projection.size(); x++) {
+        int bar_height = (int)(((double)horizontal_projection[x] / max_horizontal) * (500 / 2));
 
-void onMouse_1c(int event, int x, int y, int flags, void* param) {
-    if (event != EVENT_LBUTTONDOWN) {
-        return;
-    }
-
-    Mat_<uchar>* image_ptr = (Mat_<uchar>*)param;
-    Mat_<uchar> image = *image_ptr;
-    Mat_<Vec3b> clone;
-
-    cvtColor(image, clone, COLOR_GRAY2BGR);
-
-    int label = image(y, x);
-    vector<Point> object_pixels = find_object_pixels(image, label);
-    pair<vector<int>, vector<int>> projections = compute_object_projections(object_pixels, image.rows, image.cols);
-    Mat_<Vec3b> projection_image = draw_object_projections(projections);
-
-    imshow("1c clone", projection_image);
-
-    waitKey(0);
-}
-
-Mat_<Vec3b> draw_object_projections(pair<vector<int>, vector<int>>& projections) {
-    Mat_<Vec3b> projection_image(500, 500, Vec3b(255, 255, 255));
-
-    vector<int> horizontal_projection = projections.first;
-    vector<int> vertical_projection = projections.second;
-
-    int max_h = *max_element(horizontal_projection.begin(), horizontal_projection.end());
-    int max_v = *max_element(vertical_projection.begin(), vertical_projection.end());
-
-    for (int i = 0; i < horizontal_projection.size(); i++) {
-        if (i < projection_image.rows) {
-            int len = (max_h > 0) ? (int)(((double)horizontal_projection[i] / max_h) * (projection_image.cols - 1)) : 0;
-            Point p1(0, i);
-            Point p2(len, i);
-            line(projection_image, p1, p2, Scalar(0, 0, 255), 1);
+        for (int y = 0; y < bar_height; y++) {
+            result(500 - 1 - y, x) = projections_colors.first;
         }
     }
 
-    for (int j = 0; j < vertical_projection.size(); j++) {
-        if (j < projection_image.cols) {
-            int len = (max_v > 0) ? (int)(((double)vertical_projection[j] / max_v) * (projection_image.rows - 1)) : 0;
-            Point p1(j, projection_image.rows - 1);
-            Point p2(j, projection_image.rows - 1 - len);
-            line(projection_image, p1, p2, Scalar(255, 0, 0), 1);
+    for (int y = 0; y < vertical_projection.size(); y++) {
+        int bar_width = (int)(((double)vertical_projection[y] / max_vertical) * (500 / 2));
+
+        for (int x = 0; x < bar_width; x++) {
+            result(y, x) = projections_colors.second;
         }
     }
 
-    return projection_image;
+    return result;
 }
 
-void practical_work_1_c() {
+void practical_work_1() {
     Mat_<uchar> image = imread("Images/trasaturi_geom.bmp", IMREAD_GRAYSCALE);
 
-    namedWindow("1c", WINDOW_AUTOSIZE);
-    imshow("1c", image);
+    namedWindow("1 initial", WINDOW_AUTOSIZE);
+    imshow("1 initial", image);
 
-    setMouseCallback("1c", onMouse_1c, &image);
+    setMouseCallback("1 initial", onMouse, &image);
 
     waitKey(0);
-    destroyWindow("1c");
+
+    destroyWindow("1 initial");
 }
 
-Mat_<uchar> processing_function(Mat_<uchar>& image, int TH_area, int phi_LOW, int phi_HIGH) {
+Mat_<uchar> processing_function(Mat_<uchar> image, int TH_area, int phi_LOW, int phi_HIGH) {
     Mat_<uchar> result = image.clone();
 
     for (int label = 1; label < 256; label++) {
@@ -383,16 +336,30 @@ Mat_<uchar> processing_function(Mat_<uchar>& image, int TH_area, int phi_LOW, in
     return result;
 }
 
+vector<Point> find_object_pixels(Mat_<uchar> image, int label) {
+    vector<Point> result;
+
+    for (int i = 0; i < image.rows; i++) {
+        for (int j = 0; j < image.cols; j++) {
+            if (image(i, j) == label) {
+                result.push_back(Point(i, j));
+            }
+        }
+    }
+
+    return result;
+}
+
 void practical_work_2() {
     Mat_<uchar> image = imread("Images/linie_oblica.bmp", IMREAD_GRAYSCALE);
 
     int TH_area = 100000;
     double phi_LOW = 0.0;
-    double phi_HIGH = 1.0/4.0 * CV_PI;
+    double phi_HIGH = 1.0/2.0 * CV_PI;
 
     Mat_<uchar> result = processing_function(image, TH_area, phi_LOW, phi_HIGH);
 
-    imshow("2", image);
+    imshow("2 initial", image);
     imshow("2 clone", result);
 
     waitKey(0);
