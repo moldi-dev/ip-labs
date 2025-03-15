@@ -43,7 +43,7 @@ void practical_work_2();
 int main() {
 
     //practical_work_1();
-    //practical_work_2();
+    practical_work_2();
 
     return 0;
 }
@@ -212,13 +212,13 @@ void onMouse(int event, int x, int y, int flags, void* param) {
     double length = 25.0;
 
     Point p1(
-        (int)round(object_center_of_mass.x - length * cos(object_axis_of_elongation)),
-        (int)round(object_center_of_mass.y - length * sin(object_axis_of_elongation))
+        (int)round(object_center_of_mass.x - length * sin(object_axis_of_elongation)),
+        (int)round(object_center_of_mass.y - length * cos(object_axis_of_elongation))
     );
 
     Point p2(
-        (int)round(object_center_of_mass.x + length * cos(object_axis_of_elongation)),
-        (int)round(object_center_of_mass.y + length * sin(object_axis_of_elongation))
+        (int)round(object_center_of_mass.x + length * sin(object_axis_of_elongation)),
+        (int)round(object_center_of_mass.y + length * cos(object_axis_of_elongation))
     );
 
     line(clone, p1, p2, Scalar(255, 0, 0), 2);
@@ -314,7 +314,7 @@ void practical_work_1() {
 Mat_<uchar> processing_function(Mat_<uchar> image, int TH_area, int phi_LOW, int phi_HIGH) {
     Mat_<uchar> result = image.clone();
 
-    for (int label = 1; label < 256; label++) {
+    for (int label = 0; label < 256; label++) {
         vector<Point> object_pixels = find_object_pixels(result, label);
         int object_area = compute_object_area(object_pixels);
         Point2d object_center_of_mass = compute_object_center_of_mass(object_pixels);
@@ -327,7 +327,9 @@ Mat_<uchar> processing_function(Mat_<uchar> image, int TH_area, int phi_LOW, int
         if (object_area >= TH_area || axis_of_elongation < phi_LOW || axis_of_elongation > phi_HIGH) {
             for (int i = 0; i < result.rows; i++) {
                 for (int j = 0; j < result.cols; j++) {
-                    result(i, j) = 255;
+                    if (result(i, j) == label) {
+                        result(i, j) = 255;
+                    }
                 }
             }
         }
@@ -351,9 +353,9 @@ vector<Point> find_object_pixels(Mat_<uchar> image, int label) {
 }
 
 void practical_work_2() {
-    Mat_<uchar> image = imread("Images/linie_oblica.bmp", IMREAD_GRAYSCALE);
+    Mat_<uchar> image = imread("Images/trasaturi_geom.bmp", IMREAD_GRAYSCALE);
 
-    int TH_area = 100000;
+    int TH_area = 10000;
     double phi_LOW = 0.0;
     double phi_HIGH = 1.0/2.0 * CV_PI;
 
